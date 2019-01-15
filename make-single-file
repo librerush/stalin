@@ -1,5 +1,4 @@
-#!/bin/tcsh -f
-scc -o remove-extra-blank-lines remove-extra-blank-lines.sc
+#!/bin/sh -e
 rm -f remove-extra-blank-lines.c
 rm -f stalin.sc last-line.sc trotsky.sed
 cat <<eof >trotsky.sed
@@ -28,4 +27,4 @@ cat lenin.sc\
     source/stalin.sc\
     |sed -f trotsky.sed|cat - last-line.sc\
     |./remove-extra-blank-lines >stalin.sc
-rm -f last-line.sc trotsky.sed remove-extra-blank-lines
+rm -f last-line.sc trotsky.sed
