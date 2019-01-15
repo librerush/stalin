@@ -1,4 +1,5 @@
-CC = gcc
+
+stalin ?= ./stalin
 
 OPTIONS = -d1 -d5 -d6 -On -t -c -db\
           -clone-size-limit 0 -split-even-if-no-widening\
@@ -7,13 +8,19 @@ OPTIONS = -d1 -d5 -d6 -On -t -c -db\
           -do-not-index-constant-structure-types-by-expression\
           -do-not-index-allocated-structure-types-by-expression
 
+architectures := amd64 i386 ia64 sparc
+
+arch_c_files := $(addprefix stalin-arch-,$(addsuffix .c,$(architectures)))
+
 # Stalin can be compiled with -freg-struct-return on most platforms. But gcc
 # and egcs have a bug on Linux/Alpha that causes them to crash when given
 # -freg-struct-return. ARCH_OPTS is set up apprpriately by ./build to handle
 # this.
 
+CC_OPTIMIZATION ?= -O3
+
 stalin: stalin.c
-	$(CC) -o stalin -I./include -O3 -fomit-frame-pointer\
+	$(CC) -o stalin -I./include $(CC_OPTIMIZATION) -fomit-frame-pointer\
               -fno-strict-aliasing ${ARCH_OPTS}\
 	      stalin.c -L./include -lm -lgc
 	./post-make
@@ -22,59 +29,14 @@ stalin-architecture: stalin-architecture.c
 	$(CC) -o stalin-architecture stalin-architecture.c
 
 stalin.c: stalin.sc
-	./stalin $(OPTIONS) stalin
+	$(stalin) $(OPTIONS) stalin
 
-stalin-IA32.c: stalin.sc
-	./stalin $(OPTIONS) -architecture IA32 stalin
-	mv -f stalin.c stalin-IA32.c
+stalin-arch-%.c: stalin.sc
+	$(stalin) $(OPTIONS) -architecture $(patsubst stalin-arch-%.c,%,$@) \
+	  $(patsubst %.sc,%,$<)
+	mv -f stalin.c $@
 
-stalin-IA32-align-double.c: stalin.sc
-	./stalin $(OPTIONS) -architecture IA32-align-double stalin
-	mv -f stalin.c stalin-IA32-align-double.c
-
-stalin-SPARC.c: stalin.sc
-	./stalin $(OPTIONS) -architecture SPARC stalin
-	mv -f stalin.c stalin-SPARC.c
-
-stalin-SPARCv9.c: stalin.sc
-	./stalin $(OPTIONS) -architecture SPARCv9 stalin
-	mv -f stalin.c stalin-SPARCv9.c
-
-stalin-SPARC64.c: stalin.sc
-	./stalin $(OPTIONS) -architecture SPARC64 stalin
-	mv -f stalin.c stalin-SPARC64.c
-
-stalin-MIPS.c: stalin.sc
-	./stalin $(OPTIONS) -architecture MIPS stalin
-	mv -f stalin.c stalin-MIPS.c
-
-stalin-Alpha.c: stalin.sc
-	./stalin $(OPTIONS) -architecture Alpha stalin
-	mv -f stalin.c stalin-Alpha.c
-
-stalin-ARM.c: stalin.sc
-	./stalin $(OPTIONS) -architecture ARM stalin
-	mv -f stalin.c stalin-ARM.c
-
-stalin-M68K.c: stalin.sc
-	./stalin $(OPTIONS) -architecture M68K stalin
-	mv -f stalin.c stalin-M68K.c
-
-stalin-PowerPC.c: stalin.sc
-	./stalin $(OPTIONS) -architecture PowerPC stalin
-	mv -f stalin.c stalin-PowerPC.c
-
-stalin-S390.c: stalin.sc
-	./stalin $(OPTIONS) -architecture S390 stalin
-	mv -f stalin.c stalin-S390.c
-
-stalin-PowerPC64.c: stalin.sc
-	./stalin $(OPTIONS) -architecture PowerPC64 stalin
-	mv -f stalin.c stalin-PowerPC64.c
-
-stalin-AMD64.c: stalin.sc
-	./stalin $(OPTIONS) -architecture AMD64 stalin
-	mv -f stalin.c stalin-AMD64.c
+all-precompiled-srcs: $(arch_c_files)
 
 # Should ./include/stalin, ./stalin.c, and ./stalin only be deleted in a
 # "distclean" target?
@@ -87,3 +49,5 @@ clean:
 	rm -f ./include/stalin
 	rm -f ./stalin.c
 	rm -f ./stalin
+	rm -f ./stalin-architecture
+	cd benchmarks && ./make-clean

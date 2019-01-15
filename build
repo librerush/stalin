@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # On SPARCv9 under Solaris you need to use cc since gcc doesn't support
 # SPARCv9 under Solaris.
 
@@ -17,10 +19,10 @@ then
     DEBIAN_SYSTEM=t
 fi
 
-#if [ x"${DEBIAN_SYSTEM}" != x ]
-#then
-#  ARCH_OPTS="${ARCH_OPTS} -g -I/usr/include/gc"
-#fi
+if [ x"${CC}" = x ]
+then
+  CC=gcc
+fi
 
 case `uname -s`/`uname -r` in
   IRIX*/*)   RANLIB=touch;;
@@ -34,15 +36,22 @@ case `uname -s`/`uname -r` in
 # Might also try -DSILENT and either
 # -DUSE_I686_PREFETCH or -DUSE_3DNOW_PREFETCH
 
+# For now we use the internal libgc, even on Debian, because the
+# Debian package for the Boehm GC doesn't make the mods in
+# gc-Makefile.sed and runs out of RAM during a bootstrap build.
 
-# The Debian conditionalization has been removed since the Debian package for
-# the Boehm GC doesn't make the mods from gc-Makefile.sed.
-#if [ x"${DEBIAN_SYSTEM}" = x ]
+#if [ x"${DEBIAN_SYSTEM}" != x ]
 #then
+#  ARCH_OPTS="${ARCH_OPTS} -g -I/usr/include/gc"
+#fi
+
+if false
+then
   # Under Debian, we have libgc, but otherwise, don't assume we have the Boehm
   # GC available.
   rm -rf gc6.8
   gunzip -c gc6.8.tar.gz | tar xf -
+  (cd gc6.8 && patch -p1 < ../debian/patches/libgc-amd64.diff)
   rm -f gc6.8/Makefile.new
   sed -f gc-Makefile.sed gc6.8/Makefile >gc6.8/Makefile.new
   mv -f gc6.8/Makefile.new gc6.8/Makefile
@@ -54,11 +63,11 @@ case `uname -s`/`uname -r` in
   cp -f gc6.8/include/gc_config_macros.h include/.
   $RANLIB include/libgc.a
   rm -rf gc6.8
-#fi
+fi
 
 cd include
 rm -f libstalin.a
-gcc -c -O3 -fomit-frame-pointer -freg-struct-return xlib-c.c
+${CC} -c -O2 -fomit-frame-pointer -freg-struct-return xlib-c.c
 ar rc libstalin.a xlib-c.o
 $RANLIB libstalin.a
 rm xlib-c.o
@@ -69,7 +78,7 @@ case `./include/stalin-architecture-name` in
     echo "Cannot (yet) run Stalin on this architecture"
     exit 1;;
   *)
-    cp -f stalin-`./include/stalin-architecture-name`.c stalin.c;;
+    cp -f stalin-arch-`./include/stalin-architecture-name`.c stalin.c;;
   esac
 
 # Stalin can be compiled with -freg-struct-return on most platforms. But gcc

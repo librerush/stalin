@@ -1,8 +1,14 @@
 #!/bin/sh
+
+if [ x"${CC}" = x ]
+then
+  CC=gcc
+fi
+
 cd include
 rm -f libstalin.a
-gcc -c -O2 -fomit-frame-pointer -freg-struct-return xlib-c.c
-gcc -c -O2 -fomit-frame-pointer -freg-struct-return gl-c.c
+${CC} -c -O2 -fomit-frame-pointer -freg-struct-return xlib-c.c
+${CC} -c -O2 -fomit-frame-pointer -freg-struct-return gl-c.c
 ar rc libstalin.a xlib-c.o gl-c.c
 case `uname -s`/`uname -r` in
   IRIX*/*)   RANLIB=touch;;
