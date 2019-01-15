@@ -14,11 +14,6 @@ set -e
 # and libstalin.a with one compiler and Scheme programs such as Stalin with
 # another.
 
-if [ -r /etc/debian_version ]
-then
-    DEBIAN_SYSTEM=t
-fi
-
 if [ x"${CC}" = x ]
 then
   CC=gcc
@@ -39,31 +34,6 @@ case `uname -s`/`uname -r` in
 # For now we use the internal libgc, even on Debian, because the
 # Debian package for the Boehm GC doesn't make the mods in
 # gc-Makefile.sed and runs out of RAM during a bootstrap build.
-
-#if [ x"${DEBIAN_SYSTEM}" != x ]
-#then
-#  ARCH_OPTS="${ARCH_OPTS} -g -I/usr/include/gc"
-#fi
-
-if false
-then
-  # Under Debian, we have libgc, but otherwise, don't assume we have the Boehm
-  # GC available.
-  rm -rf gc6.8
-  gunzip -c gc6.8.tar.gz | tar xf -
-  (cd gc6.8 && patch -p1 < ../debian/patches/libgc-amd64.diff)
-  rm -f gc6.8/Makefile.new
-  sed -f gc-Makefile.sed gc6.8/Makefile >gc6.8/Makefile.new
-  mv -f gc6.8/Makefile.new gc6.8/Makefile
-  cd gc6.8
-  make test
-  cd ..
-  cp -f gc6.8/include/gc.h include/.
-  cp -f gc6.8/gc.a include/libgc.a
-  cp -f gc6.8/include/gc_config_macros.h include/.
-  $RANLIB include/libgc.a
-  rm -rf gc6.8
-fi
 
 cd include
 rm -f libstalin.a
