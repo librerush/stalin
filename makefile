@@ -2,13 +2,13 @@
 stalin ?= ./stalin
 
 OPTIONS = -d1 -d5 -d6 -On -t -c -db\
-          -clone-size-limit 0 -split-even-if-no-widening\
+          -clone-size-limit 4 -split-even-if-no-widening\
           -do-not-align-strings\
           -treat-all-symbols-as-external\
           -do-not-index-constant-structure-types-by-expression\
           -do-not-index-allocated-structure-types-by-expression
 
-architectures := amd64 i386 ia64 sparc
+architectures := AMD64
 
 arch_c_files := $(addprefix stalin-arch-,$(addsuffix .c,$(architectures)))
 
